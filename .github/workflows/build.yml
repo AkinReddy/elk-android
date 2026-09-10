@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout repository
@@ -26,11 +26,16 @@ jobs:
 
     - name: Install Buildozer & Cython
       run: |
-        pip install --upgrade buildozer cython
+        pip install --upgrade buildozer "cython<3.0.0"
+
+    - name: Accept Android SDK Licenses
+      run: |
+        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
     - name: Build APK with Buildozer
       run: |
-        buildozer android debug
+        yes | buildozer android debug
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
