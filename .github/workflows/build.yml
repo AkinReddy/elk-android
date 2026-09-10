@@ -7,56 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential libssl-dev libffi-dev zlib1g-dev \
-                                zip unzip ccache autoconf libtool pkg-config wget
-
-    - name: Install Buildozer & Cython
-      run: |
-        pip install --upgrade buildozer "cython<3.0.0"
-
-    - name: Setup Android SDK Tools
-      run: |
-        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip -q commandlinetools-linux-11076708_latest.zip
-        mv cmdline-tools latest
-        rm commandlinetools-linux-11076708_latest.zip
-        
-        cd ~/.buildozer/android/platform/android-sdk
-        if [ ! -d "tools" ]; then
-          ln -s cmdline-tools/latest tools
-        fi
-        
-        yes | tools/bin/sdkmanager --licenses || true
-
-    - name: Build APK with Buildozer
-      run: |
-        buildozer android debug
-
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: elk-led-app-debug
-        path: bin/*.apk
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
