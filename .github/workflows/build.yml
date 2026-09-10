@@ -22,20 +22,30 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libssl-dev libffi-dev zlib1g-dev \
-                                openjdk-17-jdk zip unzip ccache autoconf libtool pkg-config
+                                openjdk-17-jdk zip unzip ccache autoconf libtool pkg-config wget
 
     - name: Install Buildozer & Cython
       run: |
         pip install --upgrade buildozer "cython<3.0.0"
 
-    - name: Accept Android SDK Licenses
+    - name: Pre-install Android Command Line Tools & Accept Licenses
       run: |
-        mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        # Создаем структуру каталогов для SDK
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        
+        # Скачиваем официальные cmdline-tools от Google
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -q commandlinetools-linux-11076708_latest.zip
+        mv cmdline-tools latest
+        rm commandlinetools-linux-11076708_latest.zip
+        
+        # Автоматически принимаем все лицензии SDK
+        yes | latest/bin/sdkmanager --licenses || true
 
     - name: Build APK with Buildozer
       run: |
-        yes | buildozer android debug
+        buildozer android debug
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
