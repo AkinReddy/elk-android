@@ -28,15 +28,32 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libssl-dev libffi-dev zlib1g-dev \
-                                zip unzip ccache autoconf libtool pkg-config cmake
+                                zip unzip ccache autoconf libtool pkg-config wget
 
     - name: Install Buildozer & Cython
       run: |
-        pip install --upgrade "buildozer>=1.5.0" "cython<3.0.0"
+        pip install --upgrade buildozer "cython<3.0.0"
+
+    - name: Setup Android SDK Tools
+      run: |
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -q commandlinetools-linux-11076708_latest.zip
+        mv cmdline-tools latest
+        rm commandlinetools-linux-11076708_latest.zip
+        
+        cd ~/.buildozer/android/platform/android-sdk
+        if [ ! -d "tools" ]; then
+          ln -s cmdline-tools/latest tools
+        fi
+        
+        yes | tools/bin/sdkmanager --licenses || true
 
     - name: Build APK with Buildozer
       run: |
-        buildozer -v android debug
+        buildozer android debug
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
